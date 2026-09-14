@@ -1,5 +1,6 @@
 from tqdm import tqdm
 from deep_translator import GoogleTranslator
+import argostranslate.translate
 from itertools import chain
 import copy
 from .language_configuration import fix_code_language, INVERTED_LANGUAGES
@@ -11,6 +12,8 @@ import time
 TRANSLATION_PROCESS_OPTIONS = [
     "google_translator_batch",
     "google_translator",
+    "argos_translator_batch",
+    "argos_translator",
     "gpt-3.5-turbo-0125_batch",
     "gpt-3.5-turbo-0125",
     "gpt-4-turbo-preview_batch",
@@ -19,10 +22,45 @@ TRANSLATION_PROCESS_OPTIONS = [
 ]
 DOCS_TRANSLATION_PROCESS_OPTIONS = [
     "google_translator",
+    "argos_translator",
     "gpt-3.5-turbo-0125",
     "gpt-4-turbo-preview",
     "disable_translation",
 ]
+
+
+def argos_translate_text(text, source, target):
+    """
+    Translate text using Argos Translate.
+    """
+    return argostranslate.translate.translate(
+        text,
+        source,
+        target,
+    )
+
+
+def argos_translate_iterative(segments, target, source=None):
+    """
+    Translate segments individually using Argos Translate.
+    """
+    segments_ = copy.deepcopy(segments)
+
+    if not source:
+        source = "en"
+
+    for line in tqdm(range(len(segments_)), desc="Translating"):
+        text = segments_[line]["text"].strip()
+
+        translated_line = argos_translate_text(
+            text,
+            source,
+            target,
+        )
+
+        segments_[line]["text"] = translated_line
+
+    return segments_
 
 
 def translate_iterative(segments, target, source=None):
@@ -90,6 +128,41 @@ def verify_translate(
             f"{len(segments), len(translated_lines)}"
         )
         return translate_iterative(segments, target, source)
+
+
+def argos_translate_batch(segments, target, chunk_size=2000, source=None):
+    """
+    Translate text segments in batches using Argos Translate.
+    """
+    segments_copy = copy.deepcopy(segments)
+
+    if not source:
+        source = "en"
+
+    progress_bar = tqdm(total=len(segments_copy), desc="Translating")
+    
+    for line in range(len(segments_copy)):
+        text = segments_copy[line]["text"].strip()
+
+        try:
+            translated_text = argos_translate_text(
+                text,
+                source,
+                target,
+            )
+            segments_copy[line]["text"] = translated_text
+            progress_bar.update(1)
+
+        except Exception as error:
+            logger.error(
+                f"Argos translation failed: {str(error)}"
+            )
+            progress_bar.close()
+            raise
+
+    progress_bar.close()
+
+    return segments_copy
 
 
 def translate_batch(segments, target, chunk_size=2000, source=None):
@@ -434,6 +507,19 @@ def translate_text(
                 fix_code_language(target),
                 chunk_size,
                 fix_code_language(source)
+            )
+        case "argos_translator":
+            return argos_translate_iterative(
+                segments,
+                fix_code_language(target),
+                fix_code_language(source) if source else "en",
+            )
+        case "argos_translator_batch":
+            return argos_translate_batch(
+                segments,
+                fix_code_language(target),
+                chunk_size,
+                fix_code_language(source) if source else "en",
             )
         case "google_translator":
             return translate_iterative(
