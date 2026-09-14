@@ -1,3 +1,4 @@
+import re
 from tqdm import tqdm
 from deep_translator import GoogleTranslator
 import argostranslate.translate
@@ -33,11 +34,19 @@ def argos_translate_text(text, source, target):
     """
     Translate text using Argos Translate.
     """
-    return argostranslate.translate.translate(
+    translated_text = argostranslate.translate.translate(
         text,
         source,
         target,
     )
+
+    translated_text = re.sub(
+        r"(?<=\w)\s+-\s+(?=\w)",
+        "-",
+        translated_text,
+    )
+
+    return translated_text
 
 
 def argos_translate_iterative(segments, target, source=None):
