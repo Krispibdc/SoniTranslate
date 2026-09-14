@@ -416,7 +416,7 @@ class SoniTranslate(SoniTrCache):
         literalize_numbers=True,
         segment_duration_limit=15,
         diarization_model="pyannote_2.1",
-        translate_process="google_translator_batch",
+        translate_process="argos_translator_batch",
         subtitle_file=None,
         output_type="video (mp4)",
         voiceless_track=False,
