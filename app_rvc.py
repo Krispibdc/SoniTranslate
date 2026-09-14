@@ -1909,7 +1909,7 @@ def create_gui(theme, logs_in_gui=False):
                             )
                             translate_process_dropdown = gr.Dropdown(
                                 TRANSLATION_PROCESS_OPTIONS,
-                                value=TRANSLATION_PROCESS_OPTIONS[0],
+                                value=TRANSLATION_PROCESS_OPTIONS[2],
                                 label=lg_conf["tr_process_label"],
                             )
 
