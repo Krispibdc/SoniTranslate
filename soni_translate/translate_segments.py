@@ -503,7 +503,7 @@ def gpt_batch(segments, model, target, token_batch_limit=900, source=None):
 def translate_text(
     segments,
     target,
-    translation_process="google_translator_batch",
+    translation_process="argos_translator_batch",
     chunk_size=4500,
     source=None,
     token_batch_limit=1000,
